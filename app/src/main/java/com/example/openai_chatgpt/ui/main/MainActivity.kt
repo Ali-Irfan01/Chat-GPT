@@ -1,4 +1,4 @@
-package com.example.openai_chatgpt
+package com.example.openai_chatgpt.ui.main
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
