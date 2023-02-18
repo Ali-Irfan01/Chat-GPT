@@ -8,9 +8,9 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.example.openai_chatgpt.data.models.GPTRequest
-import com.example.openai_chatgpt.data.models.GPTResponse
-import com.example.openai_chatgpt.data.models.NetworkResult
+import com.bumptech.glide.Glide
+import com.example.openai_chatgpt.R
+import com.example.openai_chatgpt.data.models.*
 import com.example.openai_chatgpt.data.repository.RepositoryImplementation
 import com.example.openai_chatgpt.databinding.ActivityMainBinding
 import com.example.openai_chatgpt.utils.Constants.Companion.myPrompt
@@ -35,6 +35,50 @@ class MainActivity : AppCompatActivity() {
             hideKeyboard()
             setOnClickListener()
         }
+
+        binding.btnFetchImage.setOnClickListener {
+            setOnClickListenerForImage()
+        }
+    }
+
+    private fun setOnClickListenerForImage()    {
+        val myRequest = GPTImageRequest().apply {
+            prompt = binding.edtQuestion.text.toString()
+        }
+        lifecycleScope.launch(Dispatchers.IO){
+            viewModel.getImageResponse(myRequest)
+        }
+        observeLiveDataForImage()
+    }
+
+    private fun observeLiveDataForImage() {
+        viewModel.responseImageLiveData.observe(this) {
+            when (it) {
+                is NetworkResult.Success -> {
+                    Log.d("TAG", "MainActivity: Response received from livedata")
+                    Log.d("TAG", "MainActivity: Request Success")
+                    setSuccessUiForImage(it.data!!.data.get(0).url)
+                }
+                is NetworkResult.Error -> {
+                    Log.d("TAG", "MainActivity: Request Error")
+                    setErrorUiForImage(it)
+                }
+                is NetworkResult.Loading -> {
+                    Log.d("TAG", "MainActivity: Loading")
+                    setLoadingUi()
+                }
+            }
+        }
+    }
+
+    private fun setErrorUiForImage(it: NetworkResult<GPTImageResponse>){
+        binding.GPTImage.visibility = View.INVISIBLE
+        binding.progressBar.visibility = View.INVISIBLE
+    }
+
+    private fun setSuccessUiForImage(url: String){
+        Glide.with(this).load(url).into(binding.GPTImage)
+        binding.progressBar.visibility = View.INVISIBLE
     }
 
     private fun setOnClickListener(){
@@ -59,6 +103,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun setSuccessUi(response: String?)  {
         binding.textView.text = response
+        binding.edtQuestion.setText("")
         binding.textView.visibility = View.VISIBLE
         binding.progressBar.visibility = View.INVISIBLE
     }
